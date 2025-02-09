@@ -105,19 +105,33 @@ app.post("/api/auth/login", [
 app.post("/api/investments", auth, async (req, res) => {
     try {
         const { projectName, amountInvested, energyGenerated, returns } = req.body;
+
+        console.log("📌 Incoming request body:", req.body);
+        console.log("🔍 User Info from Auth Middleware:", req.user); // ✅ This should show userId
+
+        if (!req.user || !req.user.userId) {
+            console.error("❌ Kein UserId gefunden in req.user!");
+            return res.status(401).json({ message: "Ungültiger Benutzer, Zugriff verweigert" });
+        }
+
         const newInvestment = new Investment({
-            userId: req.user.userId,
+            userId: req.user.userId, // ✅ Ensure this exists
             projectName,
             amountInvested,
             energyGenerated,
             returns
         });
+
         await newInvestment.save();
+        console.log("✅ Investment Saved:", newInvestment);
+
         res.json(newInvestment);
     } catch (error) {
+        console.error("❌ Fehler beim Speichern der Investition:", error);
         res.status(500).json({ error: "Fehler beim Speichern der Investition" });
     }
 });
+
 
 // ✅ GET INVESTMENTS (User-Specific)
 app.get("/api/investments", auth, async (req, res) => {
